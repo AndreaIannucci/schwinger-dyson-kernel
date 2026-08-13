@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.sdker.reference_solver import SimpleSolver
+from sdker.reference_solver import SimpleSolver
 
 
 def direct_quartic_solver(gamma):

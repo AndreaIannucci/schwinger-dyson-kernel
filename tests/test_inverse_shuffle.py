@@ -3,13 +3,13 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.sdker.inverse_shuffle import (
+from sdker.inverse_shuffle import (
     build_inverse_shuffle_cache,
     get_inverse_shuffle_cache,
     split_word,
 )
-from src.sdker.shuffle import inverse_shuffle_word
-from src.sdker.tensor_algebra import TensorAlgebraSpec
+from sdker.shuffle import inverse_shuffle_word
+from sdker.tensor_algebra import TensorAlgebraSpec
 
 
 @pytest.mark.parametrize(

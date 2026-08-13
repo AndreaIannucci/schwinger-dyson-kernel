@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.sdker.tensor_algebra import TensorAlgebraSpec, TensorElement
+from sdker.tensor_algebra import TensorAlgebraSpec, TensorElement
 
 
 @pytest.mark.parametrize(

@@ -3,8 +3,8 @@ import math
 import numpy as np
 import pytest
 
-from src.sdker.signatures import signature_increments_from_path
-from src.sdker.tensor_algebra import TensorElement
+from sdker.signatures import signature_increments_from_path
+from sdker.tensor_algebra import TensorElement
 
 
 def test_one_dimensional_straight_line_signature():

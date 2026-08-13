@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.sdker.combinatorics import (
+from sdker.combinatorics import (
     get_pairing_cache,
     saturated_pairings_for_d,
 )

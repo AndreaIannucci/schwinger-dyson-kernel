@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 
-from src.sdker.polynomial import compile_poly_numpy
-from src.sdker.randomized_rde import RandomizedRDE
-from src.sdker.reference_solver import SimpleSolver
-from src.sdker.signatures import signature_increments_from_path
-from src.sdker.solver import SDKSolverCompiled, SDKSolverRuntime
-from src.sdker.tensor_algebra import TensorAlgebraSpec
+from sdker.polynomial import compile_poly_numpy
+from sdker.randomized_rde import RandomizedRDE
+from sdker.reference_solver import SimpleSolver
+from sdker.signatures import signature_increments_from_path
+from sdker.solver import SDKSolverCompiled, SDKSolverRuntime
+from sdker.tensor_algebra import TensorAlgebraSpec
 
 
 def make_sdk_solver(path_dim, depth):

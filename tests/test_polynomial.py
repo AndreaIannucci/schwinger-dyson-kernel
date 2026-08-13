@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 
-from src.sdker.combinatorics import get_pairing_cache
-from src.sdker.polynomial import (
+from sdker.combinatorics import get_pairing_cache
+from sdker.polynomial import (
     compile_poly_numpy,
     compiled_compute_vals_terms,
 )
-from src.sdker.tensor_algebra import TensorAlgebraSpec, TensorElement
+from sdker.tensor_algebra import TensorAlgebraSpec, TensorElement
 
 
 def test_compute_vals_for_empty_word():

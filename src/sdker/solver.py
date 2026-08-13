@@ -283,10 +283,17 @@ class SDKSolverRuntime:
 
 
 
-def make_sdk_solver(path_dim: int, depth: int) -> tuple[
-    TensorAlgebraSpec,
-    SDKSolverRuntime,
-]:
+def make_sdk_solver(
+    path_dim: int,
+    depth: int,
+) -> tuple[TensorAlgebraSpec, SDKSolverRuntime]:
+    """
+    Compile an SDK solver for a fixed path dimension and tensor depth.
+
+    Compilation performs the expensive combinatorial preprocessing.
+    Reuse the returned solver for paths sharing the same dimension
+    and truncation depth.
+    """
     if path_dim < 1:
         raise ValueError("path_dim must be positive")
 

@@ -3,6 +3,17 @@ import numpy.typing as npt
 import esig 
 from typing import List, Tuple, Optional
 
+
+
+import numpy as np
+
+from sdker.polynomial import compile_poly_numpy
+from sdker.reference_solver import SimpleSolver
+from sdker.signatures import signature_increments_from_path
+from sdker.solver import make_sdk_solver
+from sdker.tensor_algebra import TensorAlgebraSpec
+
+
 def fbm_davies_harte(
     dim: int,
     n_steps: int,
@@ -87,3 +98,51 @@ def fbm_davies_harte(
 
     return  B
 
+def main():
+    path_dim = 2
+    n_steps = 32
+    hurst = 0.4
+    depth = 3
+    block_size = 1
+
+    gamma = fbm_davies_harte(
+        dim=path_dim,
+        n_steps=n_steps,
+        H=hurst,
+        rng=np.random.default_rng(123),
+    )
+
+    gamma *= 0.25
+
+    solution_spec, solver = make_sdk_solver(
+    path_dim=gamma.shape[1],
+    depth=depth,)
+
+    increment_spec, increments = (
+        signature_increments_from_path(
+            path=gamma,
+            M=block_size,
+            depth=depth,
+        )
+    )
+
+    assert increment_spec == solution_spec
+
+    solution = solver.compute(increments)
+    sdk_value = solution[0][-1][()]
+
+    reference_value = SimpleSolver(gamma).compute()[0, -1]
+
+    print(f"Path dimension:  {path_dim}")
+    print(f"Time steps:      {n_steps}")
+    print(f"Hurst parameter: {hurst}")
+    print(f"SDK value:       {sdk_value:.10f}")
+    print(f"Reference value: {reference_value:.10f}")
+    print(
+        "Absolute error:  "
+        f"{abs(sdk_value - reference_value):.3e}"
+    )
+
+
+if __name__ == "__main__":
+    main()

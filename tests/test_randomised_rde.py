@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from scipy.linalg import expm
 
-from src.sdker.randomized_rde import (
+from sdker.randomized_rde import (
     RandomizedRDE,
     _one_rde_simulation,
     random_u_lie_algebra,

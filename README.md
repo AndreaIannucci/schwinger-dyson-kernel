@@ -18,7 +18,7 @@ The repository contains:
 
 - `RandomizedRDE`, a Monte Carlo implementation used as an independent stochastic oracle;
 - utilities for converting paths into block-signature increments; and
-- simulation utilities used by the numerical experiments.
+- an experiments/ directory contains path-generation utilities supporting the numerical examples considered in the paper;.
 
 The expensive combinatorial polynomial is compiled once for a fixed path dimension and truncation depth. The compiled solver can then be reused across paths with the same configuration.
 
@@ -63,7 +63,7 @@ from sdker.tensor_algebra import TensorAlgebraSpec
 gamma = np.linspace(0.0, 0.2, 21).reshape(-1, 1)
 
 path_dim = gamma.shape[1]
-depth = 3
+depth = 3   # The depth should be greater than or equal to floor(p_variation of path)
 block_size = 1
 
 # Compile once for this path dimension and truncation depth.
@@ -121,7 +121,7 @@ K = SimpleSolver(gamma).compute()
 reference_value = K[0, -1]
 ```
 
-The SDK and reference solvers use different discretizations. They should not be expected to agree exactly on a coarse grid; the test suite verifies their agreement under mesh refinement.
+The SDK and reference solvers use different discretizations. They should not be expected to agree exactly on a coarse grid; the test suite verifies their agreement under mesh refinement. The SDK has the advantage of being able to handle paths of arbitrary low regularity whilst the reference solvers only cover the bounded variation regime. 
 
 ### Randomized-RDE oracle
 
@@ -179,13 +179,12 @@ SDKer/
 │       └── tensor_algebra.py
 ├── tests/
 ├── examples/
-├── experiments/
 ├── pyproject.toml
 ├── LICENSE
 └── README.md
 ```
 
-Code under `src/sdker/` forms the reusable package. The `experiments/` directory contains data-generation and reproduction utilities specific to the paper.
+Code under `src/sdker/` forms the reusable package. Utilities for generating fractional Brownian motion paths used to demonstrate and validate the solver in the numerical setting considered in the paper.
 
 ## Numerical considerations
 

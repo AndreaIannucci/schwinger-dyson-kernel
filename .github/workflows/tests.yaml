@@ -39,3 +39,6 @@ jobs:
 
       - name: Run tests
         run: python -m pytest
+      
+      - name: Run basic example
+        run: python examples/basic_solver.py

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from experiments.common.fractional_brownian_motion import (
+from examples.fractional_brownian_motion import (
     fbm_davies_harte,
 )
 

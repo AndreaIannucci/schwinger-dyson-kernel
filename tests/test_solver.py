@@ -1,9 +1,16 @@
 import numpy as np
 import pytest
 
-from src.sdker.polynomial import compile_poly_numpy
-from src.sdker.solver import SDKSolverCompiled, SDKSolverRuntime
-from src.sdker.tensor_algebra import TensorAlgebraSpec, TensorElement
+from sdker.polynomial import compile_poly_numpy
+from sdker.solver import (
+    SDKSolverCompiled,
+    SDKSolverRuntime,
+    make_sdk_solver,
+)
+from sdker.tensor_algebra import (
+    TensorAlgebraSpec,
+    TensorElement,
+)
 
 
 def make_compiled_solver(dim, depth):
@@ -410,3 +417,44 @@ def test_rejects_increment_with_incompatible_spec():
         match="spec",
     ):
         solver.compute([incompatible_increment])
+
+@pytest.mark.parametrize(
+    ("path_dim", "depth"),
+    [
+        (1, 1),
+        (1, 3),
+        (2, 2),
+        (3, 2),
+    ],
+)
+def test_make_sdk_solver(path_dim, depth):
+    spec, solver = make_sdk_solver(
+        path_dim=path_dim,
+        depth=depth,
+    )
+
+    assert spec.dim == path_dim
+    assert spec.max_level == depth
+    assert isinstance(solver, SDKSolverRuntime)
+    assert solver.compiled.gub_spec == spec
+    assert solver.compiled.max_d == depth
+
+
+@pytest.mark.parametrize(
+    ("path_dim", "depth"),
+    [
+        (0, 1),
+        (-1, 1),
+        (1, 0),
+        (1, -1),
+    ],
+)
+def test_make_sdk_solver_rejects_invalid_parameters(
+    path_dim,
+    depth,
+):
+    with pytest.raises(ValueError):
+        make_sdk_solver(
+            path_dim=path_dim,
+            depth=depth,
+        )

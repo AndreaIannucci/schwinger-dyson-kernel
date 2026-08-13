@@ -2,7 +2,7 @@ from collections import Counter
 
 import pytest
 
-from src.sdker.shuffle import (
+from sdker.shuffle import (
     inverse_shuffle_masks,
     inverse_shuffle_masks_cached,
     inverse_shuffle_word,
