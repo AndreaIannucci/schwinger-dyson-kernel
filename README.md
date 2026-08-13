@@ -14,7 +14,7 @@ The repository contains:
 - combinatorial generation and caching of inverse shuffles and non-crossing pairings;
 - compilation of the Schwinger–Dyson polynomial into flat NumPy index arrays;
 - a dynamic-programming solver with cached LU factorizations and Numba-accelerated polynomial evaluation;
-- `SimpleSolver`, a direct deterministic discretization used as a reference method;
+- `SimpleSolver`, a direct first level discretization used as a reference method, first derived in the paper [*Free probability, path developments and signature kernels as universal scaling limits*](https://projecteuclid.org/journals/annals-of-applied-probability/volume-36/issue-2/Free-probability-path-developments-and-signature-kernels-as-universal-scaling/10.1214/25-AAP2240.short) by Thomas Cass and William F. Turner;
 - `RandomizedRDE`, a Monte Carlo implementation used as an independent stochastic oracle;
 - utilities for converting paths into block-signature increments; and
 - simulation utilities used by the numerical experiments.
