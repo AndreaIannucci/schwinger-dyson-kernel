@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+message: >-
+  If you use SDKer in your research, please cite the accompanying
+  paper below.
+
+title: SDKer
+abstract: >-
+  Numerical research code for computing Schwinger-Dyson kernels
+  using path signatures and tensor-algebra expansions, with
+  deterministic and randomized-RDE validation.
+
+type: software
+
+authors:
+  - family-names: Iannucci
+    given-names: Andrea
+
+version: 0.1.0
+date-released: 2026-08-13
+license: MIT
+
+repository-code: https://github.com/AndreaIannucci/schwinger-dyson-kernel
+
+keywords:
+  - Schwinger-Dyson kernel
+  - path signatures
+  - rough paths
+  - tensor algebra
+  - two-parameter rough differential equations
+  - numerical methods
+
+preferred-citation:
+  type: article
+  title: >-
+    Signature Kernel and Schwinger-Dyson Kernel Equations as
+    Two-Parameter Rough Differential Equations
+
+  authors:
+    - family-names: Cass
+      given-names: Thomas
+
+    - family-names: Crisan
+      given-names: Dan
+
+    - family-names: Iannucci
+      given-names: Andrea
+
+    - family-names: Turner
+      given-names: William F.
+
+  year: 2026
+  doi: 10.48550/arXiv.2605.08844
+  url: https://arxiv.org/abs/2605.08844
