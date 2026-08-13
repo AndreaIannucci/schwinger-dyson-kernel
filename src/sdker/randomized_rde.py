@@ -1,7 +1,7 @@
 from typing import Optional
 import numpy as np
 from scipy.linalg import expm
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 import numpy.typing as npt
 
@@ -47,17 +47,35 @@ class RandomizedRDE:
 
 
     def compute_parallel(self, n_workers=None) -> complex:
-        rng = self.rng or np.random.default_rng(0)
-        seeds = rng.integers(0, 2**32 - 1, size=self.N_simul)
+        rng = self.rng
+
+        if rng is None:
+            rng = np.random.default_rng(0)
+
+        seeds = rng.integers(
+            0,
+            2**32 - 1,
+            size=self.N_simul,
+        )
+
         N = self.matrix_dim
 
-        results = []
         with ThreadPoolExecutor(max_workers=n_workers) as executor:
             futures = [
-                executor.submit(_one_rde_simulation, seed, self.path_increments, N)
+                executor.submit(
+                    _one_rde_simulation,
+                    int(seed),
+                    self.path_increments,
+                    N,
+                )
                 for seed in seeds
             ]
-            for future in as_completed(futures):
-                results.append(future.result())
+
+            # Retrieve results in submission order for deterministic
+            # floating-point summation.
+            results = [
+                future.result()
+                for future in futures
+            ]
 
         return sum(results) / (self.N_simul * N)
