@@ -23,6 +23,8 @@ dist/
 .venv-wheel/
 .venv-release/
 
+
+src/sdker/simulations.py
 experiments/output/
 
 example.py
