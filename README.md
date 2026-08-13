@@ -1,5 +1,7 @@
 # SDKer
 
+[![Tests](https://github.com/AndreaIannucci/schwinger-dyson-kernel/actions/workflows/tests.yml/badge.svg)](https://github.com/AndreaIannucci/schwinger-dyson-kernel/actions/workflows/tests.yml)
+
 Numerical research code for the Schwinger–Dyson kernel equation using path signatures, tensor-algebra expansions, and independent deterministic and randomized-RDE validation.
 
 SDKer accompanies the paper [*Signature Kernel and Schwinger-Dyson Kernel Equations as Two-Parameter Rough Differential Equations*](https://arxiv.org/abs/2605.08844) by Thomas Cass, Dan Crisan, Andrea Iannucci, and William F. Turner.
