@@ -55,42 +55,21 @@ The main solver consumes truncated signatures of path blocks rather than the raw
 ```python
 import numpy as np
 
-from sdker.polynomial import compile_poly_numpy
 from sdker.signatures import signature_increments_from_path
-from sdker.solver import SDKSolverCompiled, SDKSolverRuntime
-from sdker.tensor_algebra import TensorAlgebraSpec
+from sdker.solver import make_sdk_solver
 
 
-# A one-dimensional linear path on [0, 1].
+# A one-dimensional linear path.
 gamma = np.linspace(0.0, 0.2, 21).reshape(-1, 1)
 
-path_dim = gamma.shape[1]
-depth = 3   # The depth should be greater than or equal to floor(p_variation of path)
+depth = 3
 block_size = 1
 
 # Compile once for this path dimension and truncation depth.
-solution_spec = TensorAlgebraSpec(
-    dim=path_dim,
-    max_level=depth,
+solution_spec, solver = make_sdk_solver(
+    path_dim=gamma.shape[1],
+    depth=depth,
 )
-tail_spec = TensorAlgebraSpec(
-    dim=path_dim,
-    max_level=depth - 1,
-)
-
-polynomial = compile_poly_numpy(
-    gub_spec=solution_spec,
-    path_spec=tail_spec,
-    N=depth,
-    max_d=depth,
-)
-
-compiled = SDKSolverCompiled(
-    poly=polynomial,
-    gub_spec=solution_spec,
-    max_d=depth,
-)
-solver = SDKSolverRuntime(compiled)
 
 # Convert gamma into truncated block signatures.
 increment_spec, increments = signature_increments_from_path(
@@ -98,17 +77,19 @@ increment_spec, increments = signature_increments_from_path(
     M=block_size,
     depth=depth,
 )
+
 assert increment_spec == solution_spec
 
 # Solve the interval recursion.
-G = solver.compute(increments)
+solution = solver.compute(increments)
 
 # The scalar kernel is the empty-word coordinate on [0, T].
-kernel_value = G[0][-1][()]
+kernel_value = solution[0][-1][()]
+
 print(kernel_value)
 ```
 
-For several paths with the same dimension and depth, reuse `solver` and recompute only the block signatures.
+Polynomial compilation performs the expensive combinatorial preprocessing. For several paths with the same dimension and truncation depth, construct the solver once and reuse it; only the block signatures and solver.compute(...) call need to be repeated.
 
 ## Reference methods
 
