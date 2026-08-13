@@ -21,6 +21,7 @@ dist/
 *.egg-info/
 
 .venv-wheel/
+.venv-release/
 
 experiments/output/
 
