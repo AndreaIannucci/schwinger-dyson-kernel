@@ -1,6 +1,6 @@
 # SDKer
 
-[![Tests](https://github.com/AndreaIannucci/schwinger-dyson-kernel/actions/workflows/tests.yml/badge.svg)](https://github.com/AndreaIannucci/schwinger-dyson-kernel/actions/workflows/tests.yml)
+[![Tests](https://github.com/AndreaIannucci/schwinger-dyson-kernel/actions/workflows/tests.yaml/badge.svg)](https://github.com/AndreaIannucci/schwinger-dyson-kernel/actions/workflows/tests.yml)
 
 Numerical research code for the Schwinger–Dyson kernel equation using path signatures, tensor-algebra expansions, and independent deterministic and randomized-RDE validation.
 
