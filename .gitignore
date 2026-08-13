@@ -15,6 +15,13 @@ dist/
 .vscode/
 .ipynb_checkpoints/
 
+
+build/
+dist/
+*.egg-info/
+
+.venv-wheel/
+
 experiments/output/
 
 example.py
