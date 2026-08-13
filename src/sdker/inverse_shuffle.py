@@ -1,5 +1,5 @@
-from tensor_algebra import TensorAlgebraSpec
-from shuffle_generator import inverse_shuffle_word
+from .tensor_algebra import TensorAlgebraSpec
+from .shuffle import inverse_shuffle_word
 from dataclasses import dataclass
 from typing import Tuple, Dict, List
 

@@ -1,5 +1,5 @@
 
-from tensor_algebra import TensorAlgebraSpec, TensorElement
+from .tensor_algebra import TensorAlgebraSpec, TensorElement
 import numpy as np
 import numpy.typing as npt
 import esig

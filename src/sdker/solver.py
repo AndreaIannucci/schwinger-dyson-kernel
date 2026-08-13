@@ -4,9 +4,9 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
-from poly_encoder import compiled_compute_vals_terms, CompiledPolyNP, compile_poly_numpy
-from combinatronics_class import get_pairing_cache
-from tensor_algebra import TensorAlgebraSpec, TensorElement
+from .polynomial import compiled_compute_vals_terms, CompiledPolyNP, compile_poly_numpy
+from .combinatorics import get_pairing_cache
+from .tensor_algebra import TensorAlgebraSpec, TensorElement
 
 
 @dataclass(frozen=True)
@@ -148,6 +148,18 @@ class SDKSolverRuntime:
         empty_idx = self.compiled.empty_idx
         Id = self.compiled.Id
         spec = self.compiled.gub_spec
+
+        for index, increment in enumerate(path_increments):
+            if not isinstance(increment, TensorElement):
+                raise TypeError(
+                    f"path_increments[{index}] must be a TensorElement"
+                )
+
+            if increment.spec != spec:
+                raise ValueError(
+                    f"path_increments[{index}] has incompatible spec: "
+                    f"expected {spec}, got {increment.spec}"
+                )
 
         Id_data = Id._data.astype(np.float64, copy=False)
         Id_mat = np.eye(D, dtype=np.float64)

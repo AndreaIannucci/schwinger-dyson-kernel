@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, List, Tuple, Set, Optional
 
-from combinatronics_class import NonCrossingPairingCache, get_pairing_cache
-from tensor_algebra import TensorAlgebraSpec, TensorElement
-from inverse_shuffle_caching import get_inverse_shuffle_cache, split_word
+from .combinatorics import NonCrossingPairingCache, get_pairing_cache
+from .tensor_algebra import TensorAlgebraSpec, TensorElement
+from .inverse_shuffle import get_inverse_shuffle_cache, split_word
 
 import numpy as np
 from numba import njit

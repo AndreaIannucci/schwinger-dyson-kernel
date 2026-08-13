@@ -111,20 +111,25 @@ class TensorElement:
 
   
     def __getitem__(self, key):
-        if isinstance(key, int):
-            return self._data[key]
-        elif isinstance(key, tuple):
+        if isinstance(key, (int, np.integer)):
+            return self._data[int(key)]
+
+        if isinstance(key, tuple):
             return self._data[self.spec.word_to_index(key)]
-        else:
-            raise TypeError("Index must be int or tuple")
+
+        raise TypeError("Index must be an integer or tuple")
+
 
     def __setitem__(self, key, value):
-        if isinstance(key, int):
-            self._data[key] = value
-        elif isinstance(key, tuple):
+        if isinstance(key, (int, np.integer)):
+            self._data[int(key)] = value
+            return
+
+        if isinstance(key, tuple):
             self._data[self.spec.word_to_index(key)] = value
-        else:
-            raise TypeError("Index must be int or tuple")
+            return
+
+        raise TypeError("Index must be an integer or tuple")
 
 
     def level_view(self, k: int) -> Array:

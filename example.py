@@ -1,6 +1,6 @@
 import numpy as np
 
-from solver import make_sdk_solver
+from src.sdker.solver import make_sdk_solver
 from helper_functions import signature_increments_from_path
 
 n_steps = 1_000
