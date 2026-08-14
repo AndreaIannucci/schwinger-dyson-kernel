@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
-from .polynomial import compiled_compute_vals_terms, CompiledPolyNP, compile_poly_numpy
 from .combinatorics import get_pairing_cache
+from .polynomial import (
+    CompiledPolyNP,
+    compile_poly_numpy,
+    compiled_compute_vals_terms,
+)
 from .tensor_algebra import TensorAlgebraSpec, TensorElement
 
 
@@ -16,51 +21,58 @@ class SDKSolverCompiled:
 
     This object stores:
       - the compiled polynomial defining the recursion,
-      - algebraic constants (dimension, empty word, identity),
-      - all expensive algebraic reductions that are invariant
-        across runtime executions.
+      - algebraic constants,
+      - expensive algebraic reductions invariant across executions.
 
     Once constructed, this object is immutable and can be reused
     for many different paths.
     """
+
     poly: CompiledPolyNP
     gub_spec: TensorAlgebraSpec
-    # N: int  # dimension of solution tensor algebra
-    max_d: int   # information about the maximum index popped 
+    max_d: int
 
     def __post_init__(self):
-        # --------------------------------------------------------
-        # Basic algebraic constants
-        # --------------------------------------------------------
         object.__setattr__(self, "D", self.gub_spec.total_dim)
-        object.__setattr__(self, "empty_idx", self.gub_spec.word_to_index(()))
-        object.__setattr__(self, "Id", TensorElement.eye(self.gub_spec))
-        object.__setattr__(self, "N", self.gub_spec.max_level)
-        # --------------------------------------------------------
-        # Expensive precomputations
-        #
-        # 1) empty-word update rule (row replacement)
-        # 2) right-linear part of the polynomial (matrix A)
-        # --------------------------------------------------------
-        object.__setattr__(self, "_empty_rule", self._precompute_empty_rule())
-        object.__setattr__(self, "_lin_part", self._right_linear_part())
+        object.__setattr__(
+            self,
+            "empty_idx",
+            self.gub_spec.word_to_index(()),
+        )
+        object.__setattr__(
+            self,
+            "Id",
+            TensorElement.eye(self.gub_spec),
+        )
+        object.__setattr__(
+            self,
+            "N",
+            self.gub_spec.max_level,
+        )
 
-    # ============================================================
-    # Empty-word rule
-    # ============================================================
+        object.__setattr__(
+            self,
+            "_empty_rule",
+            self._precompute_empty_rule(),
+        )
+        object.__setattr__(
+            self,
+            "_lin_part",
+            self._right_linear_part(),
+        )
 
     def _precompute_empty_rule(self):
         """
         Precompute the algebraic rule governing the empty-word component.
 
-        This encodes the identity:
+        This encodes:
             x[()] = previous_x[()]
                     + sum_k sign_k * inc[p_k] * x[col_k]
-
-        Runtime enforcement can then be done with a single np.add.at call
-        without allocating any row-index array inside the DP loop.
         """
-        pairing_cache = get_pairing_cache(self.N, self.max_d)
+        pairing_cache = get_pairing_cache(
+            self.N,
+            self.max_d,
+        )
 
         empty_cols = []
         empty_pidx = []
@@ -68,10 +80,10 @@ class SDKSolverCompiled:
 
         for p_i in range(self.D):
             word = self.gub_spec.index_to_word(p_i)
+
             if len(word) == 0:
                 continue
 
-            # Linear expansion induced by non-crossing pairings
             terms = compiled_compute_vals_terms(
                 word,
                 d_locked=0,
@@ -80,34 +92,44 @@ class SDKSolverCompiled:
                 backward=False,
             )
 
-            for col_idx, sgn in terms:
+            for col_idx, sign in terms:
                 empty_cols.append(col_idx)
                 empty_pidx.append(p_i)
-                empty_sign.append(float(sgn))
+                empty_sign.append(float(sign))
 
-        empty_cols = np.asarray(empty_cols, dtype=np.int64)
-        empty_pidx = np.asarray(empty_pidx, dtype=np.int64)
-        empty_sign = np.asarray(empty_sign, dtype=np.float64)
+        empty_cols = np.asarray(
+            empty_cols,
+            dtype=np.int64,
+        )
+        empty_pidx = np.asarray(
+            empty_pidx,
+            dtype=np.int64,
+        )
+        empty_sign = np.asarray(
+            empty_sign,
+            dtype=np.float64,
+        )
 
-        # Precompute the row indices once (used in np.add.at)
-        empty_rows = np.full(empty_cols.shape[0], self.empty_idx, dtype=np.int64)
+        empty_rows = np.full(
+            empty_cols.shape[0],
+            self.empty_idx,
+            dtype=np.int64,
+        )
 
-        return (empty_rows, empty_cols, empty_pidx, empty_sign)
-
-
-    # ============================================================
-    # Linear part extraction
-    # ============================================================
+        return (
+            empty_rows,
+            empty_cols,
+            empty_pidx,
+            empty_sign,
+        )
 
     def _right_linear_part(self):
         """
-        Extract the part of the polynomial that is linear in the unknown.
+        Extract the part of the polynomial linear in the unknown.
 
-        In the recurrence, the unknown x = G(i, j+1) always appears
-        as the second tensor argument of poly.eval2. Therefore,
-        the linear operator A is formed by keeping only those terms
-        where gub1 is the empty word. This is because G(i,i) = 0 for every 
-        word of positive length.
+        The unknown x = G(i, j + 1) appears as the second tensor
+        argument. Therefore, we retain terms whose first tensor
+        coordinate is the empty word.
         """
         mask = self.poly.g1_idx == self.empty_idx
 
@@ -119,34 +141,35 @@ class SDKSolverCompiled:
         )
 
 
-# ============================================================
-# Runtime solver
-# ============================================================
-
 class SDKSolverRuntime:
     """
     Runtime solver for a fixed compiled SDK problem.
 
-    Given a sequence of path increments, this object computes
-    the triangular table G[i][j] via interval-based dynamic
-    programming and linear solves.
+    Given a sequence of path increments, this object computes the
+    triangular table G[i][j] using interval-based dynamic programming
+    and linear solves.
     """
 
     def __init__(self, compiled: SDKSolverCompiled):
         self.compiled = compiled
-    
-    def compute(self, path_increments: list[TensorElement]):
+
+    def compute(
+        self,
+        path_increments: list[TensorElement],
+    ):
         """
-        DP solve with:
-        - LU factorization cached per j (per increment)
-        - Polynomial evaluation using cached w_inc = coeff * inc[p_idx]
-        - Internal storage of G as raw numpy arrays (avoids TensorElement churn)
+        Compute the triangular SDK solution table.
+
+        The implementation uses:
+          - one precomputed polynomial-weight array per increment,
+          - one LU factorization per time index,
+          - raw NumPy arrays internally.
         """
         D = self.compiled.D
         T = len(path_increments)
 
         empty_idx = self.compiled.empty_idx
-        Id = self.compiled.Id
+        identity = self.compiled.Id
         spec = self.compiled.gub_spec
 
         for index, increment in enumerate(path_increments):
@@ -161,126 +184,175 @@ class SDKSolverRuntime:
                     f"expected {spec}, got {increment.spec}"
                 )
 
-        Id_data = Id._data.astype(np.float64, copy=False)
-        Id_mat = np.eye(D, dtype=np.float64)
+        identity_data = identity._data.astype(
+            np.float64,
+            copy=False,
+        )
+        identity_matrix = np.eye(
+            D,
+            dtype=np.float64,
+        )
 
-        # Unpack precomputed data
-        empty_rows, empty_cols, empty_pidx, empty_sign = self.compiled._empty_rule
-        out_lin, col_lin, p_lin, c_lin = self.compiled._lin_part
+        (
+            empty_rows,
+            empty_cols,
+            empty_pidx,
+            empty_sign,
+        ) = self.compiled._empty_rule
+
+        (
+            out_lin,
+            col_lin,
+            p_lin,
+            c_lin,
+        ) = self.compiled._lin_part
+
         poly = self.compiled.poly
 
-        # --------------------------------------------------------
-        # Allocate DP table (raw arrays) and initialize diagonal
-        # --------------------------------------------------------
-        G_data = [[None for _ in range(T + 1)] for __ in range(T + 1)]
-        for k in range(T + 1):
-            G_data[k][k] = Id_data  # safe to share; we never mutate these vectors
+        # These values do not change during the dynamic program.
+        linear_coefficients = c_lin.astype(
+            np.float64,
+            copy=False,
+        )
 
-        # --------------------------------------------------------
-        # Caches
-        # --------------------------------------------------------
-        lu_cache = {}   # id(inc_j) -> (lu, piv)
-        w_cache = {}    # id(inc_m) -> w_inc = coeff * inc[p_idx]
+        # Each increment is reused many times. Compute its polynomial
+        # weights once and access them directly by time index.
+        increment_weights = tuple(
+            poly.precompute_inc_weights(increment)
+            for increment in path_increments
+        )
 
-        def get_w(inc: TensorElement) -> np.ndarray:
-            key = id(inc)
-            w = w_cache.get(key)
-            if w is None:
-                w = poly.precompute_inc_weights(inc)
-                w_cache[key] = w
-            return w
-
-        def build_A(inc: TensorElement) -> np.ndarray:
+        def build_A(
+            increment: TensorElement,
+        ) -> np.ndarray:
             """
-            Build the linear operator A associated with a path increment inc.
+            Build the linear operator associated with one increment.
             """
-            pd = inc._data
-            weights = c_lin.astype(np.float64, copy=False) * pd[p_lin].astype(np.float64, copy=False)
+            increment_data = increment._data.astype(
+                np.float64,
+                copy=False,
+            )
 
-            A = np.zeros((D, D), dtype=np.float64)
-            np.add.at(A, (out_lin, col_lin), weights)
+            weights = (
+                linear_coefficients
+                * increment_data[p_lin]
+            )
+
+            A = np.zeros(
+                (D, D),
+                dtype=np.float64,
+            )
+
+            np.add.at(
+                A,
+                (out_lin, col_lin),
+                weights,
+            )
+
             return A
 
-        def get_lu_for_increment(inc: TensorElement):
+        def factorize_increment(
+            increment: TensorElement,
+        ):
             """
-            Build and factorize M = (I - A(inc)) with empty-row rule enforced.
-            Cached per increment (per j).
+            Build and factorize M = I - A(increment), enforcing
+            the empty-word row rule.
             """
-            key = id(inc)
-            if key in lu_cache:
-                return lu_cache[key]
+            A = build_A(increment)
+            M = identity_matrix - A
 
-            A = build_A(inc)
-            M = Id_mat - A
+            increment_data = increment._data.astype(
+                np.float64,
+                copy=False,
+            )
 
-            # Enforce: x_empty - sum(empty_row_vals * x_col) = b_empty
-            pd = inc._data.astype(np.float64, copy=False)
-            empty_row_vals = empty_sign * pd[empty_pidx]
+            empty_row_values = (
+                empty_sign
+                * increment_data[empty_pidx]
+            )
 
             M[empty_idx, :] = 0.0
             M[empty_idx, empty_idx] = 1.0
-            np.add.at(M, (empty_rows, empty_cols), -empty_row_vals)
 
-            lu_cache[key] = lu_factor(M)
-            return lu_cache[key]
+            np.add.at(
+                M,
+                (empty_rows, empty_cols),
+                -empty_row_values,
+            )
 
-        # ========================================================
-        # Main interval DP
-        # ========================================================
-        for L in range(1, T + 1):
-            for i in range(T + 1 - L):
-                j = i + L - 1  # compute G[i][j+1]
+            return lu_factor(M)
 
-                inc_self = path_increments[j]
-                lu, piv = get_lu_for_increment(inc_self)
+        # Factor every time-index matrix before entering the
+        # dynamic-programming loops.
+        lu_factors = tuple(
+            factorize_increment(increment)
+            for increment in path_increments
+        )
 
-                # ------------------------------------------------
-                # Build RHS b (no intermediate TensorElements)
-                # ------------------------------------------------
-                b = np.zeros(D, dtype=np.float64)
+        # Raw internal table. Diagonal entries can safely share the
+        # identity array because they are never mutated.
+        G_data = [
+            [None for _ in range(T + 1)]
+            for _ in range(T + 1)
+        ]
 
-                # b += poly(G[i][j], Id, inc_self)
-                poly.eval2_weighted_add_into_data(
-                    b,
-                    G_data[i][j],
-                    Id_data,
-                    get_w(inc_self),
+        for k in range(T + 1):
+            G_data[k][k] = identity_data
+
+        # Compute intervals in increasing order of length.
+        for length in range(1, T + 1):
+            for i in range(T + 1 - length):
+                j = i + length - 1
+
+                lu, piv = lu_factors[j]
+
+                rhs = np.zeros(
+                    D,
+                    dtype=np.float64,
                 )
 
-                # b += sum_m poly(G[i][m-1], G[m][j+1], inc_m)
+                # First contribution:
+                # poly(G[i][j], identity, increment[j]).
+                poly.eval2_weighted_add_into_data(
+                    rhs,
+                    G_data[i][j],
+                    identity_data,
+                    increment_weights[j],
+                )
+
+                # Remaining interval contributions.
                 for m in range(i + 1, j + 1):
-                    inc_m = path_increments[m - 1]
                     poly.eval2_weighted_add_into_data(
-                        b,
+                        rhs,
                         G_data[i][m - 1],
                         G_data[m][j + 1],
-                        get_w(inc_m),
+                        increment_weights[m - 1],
                     )
 
-                # empty-word RHS component
-                b[empty_idx] = G_data[i][j][empty_idx]
+                rhs[empty_idx] = G_data[i][j][empty_idx]
 
-                # ------------------------------------------------
-                # Solve using cached LU
-                # ------------------------------------------------
-                x = lu_solve((lu, piv), b)
-                G_data[i][j + 1] = x
+                G_data[i][j + 1] = lu_solve(
+                    (lu, piv),
+                    rhs,
+                )
 
-        # --------------------------------------------------------
-        # Wrap back into TensorElements (keep your original API)
-        # --------------------------------------------------------
-        G = [[None for _ in range(T + 1)] for __ in range(T + 1)]
-        for a in range(T + 1):
-            for b_ in range(T + 1):
-                arr = G_data[a][b_]
-                if arr is None:
-                    G[a][b_] = None
-                else:
-                    G[a][b_] = TensorElement(spec, arr)
+        # Convert raw arrays back to the existing public API.
+        G = [
+            [None for _ in range(T + 1)]
+            for _ in range(T + 1)
+        ]
+
+        for i in range(T + 1):
+            for j in range(T + 1):
+                data = G_data[i][j]
+
+                if data is not None:
+                    G[i][j] = TensorElement(
+                        spec,
+                        data,
+                    )
 
         return G
-
-
 
 
 def make_sdk_solver(
@@ -323,4 +395,7 @@ def make_sdk_solver(
         max_d=depth,
     )
 
-    return solution_spec, SDKSolverRuntime(compiled)
+    return (
+        solution_spec,
+        SDKSolverRuntime(compiled),
+    )
